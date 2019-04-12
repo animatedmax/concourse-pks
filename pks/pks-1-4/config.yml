@@ -8,18 +8,19 @@
     depends_on: bind
     trigger: true
     endpoint: https://api.run.pivotal.io
-    organization: pivotal-pubtools
-    space: pivotalcf-staging
+    organization: cf-docs-sandbox
+    space: development
     routes:
       - domain: cfapps.io
-        hostname: docs-pcf-staging
+        hostname: docs-pks-staging
         path: runtimes/pks/1-4
   - name: production
     depends_on: staging
     trigger: false
     endpoint: https://api.run.pivotal.io
-    organization: pivotal-pubtools
-    space: pivotalcf-prod
+    organization: cf-docs-sandbox
+    space: development
     routes:
-      - domain: docs.pivotal.io
-        path: runtimes/pks/1-4
+      - domain: cfapps.io
+        hostname: docs-pks-prod
+        path: /runtimes/pks/1-4
