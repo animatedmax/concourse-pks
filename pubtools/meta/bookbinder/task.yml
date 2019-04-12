@@ -1,0 +1,14 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: pubtools/bookbinder-10.1.15
+inputs:
+- name: bookbinder
+- name: concourse-scripts
+- name: bookbinder-bundle
+outputs:
+- name: bundle_output
+run:
+  path: concourse-scripts/pubtools/meta/bookbinder/test.sh

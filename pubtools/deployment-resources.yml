@@ -1,0 +1,43 @@
+- name: cf-pubtools-staging
+  type: cf
+  source:
+    api: https://api.run.pivotal.io
+    username: "{{cloud-foundry-username}}"
+    password: "{{cloud-foundry-password}}"
+    organization: pivotal-pubtools
+    space: pubtools-staging
+    skip_cert_check: false
+
+- name: cf-docs-prod
+  type: cf
+  source:
+    api: https://api.run.pivotal.io
+    username: "{{cloud-foundry-username}}"
+    password: "{{cloud-foundry-password}}"
+    organization: cfcommunity
+    space: docs-prod
+    skip_cert_check: false
+
+- name: cf-cli-release
+  type: github-release
+  source:
+    access_token: "{{cf-cli-token}}"
+    user: cloudfoundry
+    repository: cli
+
+- name: docs-cf-cli-push
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/docs-cf-cli.git
+    branch: master
+    private_key: "{{github-deploy-bot}}"
+
+- name: cf-oss-pubtools-staging
+  type: cf
+  source:
+    api: https://api.run.pivotal.io
+    username: "{{cloud-foundry-username}}"
+    password: "{{cloud-foundry-password}}"
+    organization: cfcommunity
+    space: docs-prod
+    skip_cert_check: false

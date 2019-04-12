@@ -1,0 +1,74 @@
+---
+resources:
+- name: docs-book-platform-automation
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-book-platform-automation.git
+    branch: develop
+    private_key: {{github-deploy-bot}}
+- name: docs-platform-automation
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-platform-automation.git
+    branch: develop
+    private_key: {{github-deploy-bot}}
+- name: concourse-scripts
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/concourse-scripts-docs.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: bookbinder-release-complete
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: bookbinder-release-complete.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: concourse-scripts-bundle
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: concourse-scripts-bundle.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: docs-layout-repo
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-layout-repo.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: platform-automation
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/platform-automation.git
+    branch: develop
+    private_key: {{github-deploy-bot}}
+    paths:
+    - docs
+    - examples
+    - tasks
+
+jobs:
+- name: build
+  serial: true
+  plan:
+  - aggregate: 
+    - get: concourse-scripts
+    - get: concourse-scripts-bundle
+    - get: bookbinder-release-complete
+    - get: docs-layout-repo
+      trigger: true
+    - get: docs-platform-automation
+      trigger: true
+    - get: docs-book-platform-automation
+      trigger: true
+    - get: platform-automation
+      trigger: true
+  - task: build
+    file: concourse-scripts/platform-automation/build_task.yml
+    params:
+      USERNAME: {{cloud-foundry-username}}
+      PASSWORD: {{cloud-foundry-password}}

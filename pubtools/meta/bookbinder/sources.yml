@@ -1,0 +1,30 @@
+---
+- name: concourse-scripts-docs-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/concourse-scripts-docs.git
+    branch: master
+    private_key: "{{github-deploy-bot}}"
+- name: bookbinder-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/bookbinder.git
+    branch: master
+    private_key: "{{github-deploy-bot}}"
+- name: bookbinder-master-bundle
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: bookbinder-master-bundle.tar.gz
+    private: true
+    access_key_id: "{{aws-access-key}}"
+    secret_access_key: "{{aws-secret-key}}"
+- name: bookbinder-master-complete
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: bookbinder-master-complete.tar.gz
+    private: true
+    access_key_id: "{{aws-access-key}}"
+    secret_access_key: "{{aws-secret-key}}"
+

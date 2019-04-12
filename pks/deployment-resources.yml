@@ -1,0 +1,25 @@
+---
+- name: pks-pks-1-2-s3
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: pcf-pks-final_app.tar.gz
+    private: true
+    access_key_id: "{{aws-access-key}}"
+    secret_access_key: "{{aws-secret-key}}"
+- name: pks-pks-1-3-s3
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: pcf-pks-final_app.tar.gz
+    private: true
+    access_key_id: "{{aws-access-key}}"
+    secret_access_key: "{{aws-secret-key}}"
+- name: pks-pks-1-4-s3
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: pcf-pks-final_app.tar.gz
+    private: true
+    access_key_id: "{{aws-access-key}}"
+    secret_access_key: "{{aws-secret-key}}"

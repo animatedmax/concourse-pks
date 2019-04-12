@@ -1,0 +1,29 @@
+---
+- name: testbb-release
+  type: github-release
+  source:
+    user: animatedmax
+    repository: bookbinder
+    access_token: "{{github-deploy-bot-token}}"
+- name: concourse-scripts-docs-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/concourse-scripts-docs.git
+    branch: master
+    private_key: "{{github-deploy-bot}}"
+- name: testbb-release-bundle
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: testbb-release-bundle.tar.gz
+    private: true
+    access_key_id: "{{aws-access-key}}"
+    secret_access_key: "{{aws-secret-key}}"
+- name: testbb-release-complete
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: testbb-release-complete.tar.gz
+    private: true
+    access_key_id: "{{aws-access-key}}"
+    secret_access_key: "{{aws-secret-key}}"

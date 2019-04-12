@@ -1,0 +1,25 @@
+---
+- book: pivotal-cf/docs-book-pks
+  book_branch: 'master'
+  routes: []
+  app_name: docs-pks-1-4
+  deployments:
+  - name: staging
+    depends_on: bind
+    trigger: true
+    endpoint: https://api.run.pivotal.io
+    organization: pivotal-pubtools
+    space: pivotalcf-staging
+    routes:
+      - domain: cfapps.io
+        hostname: docs-pcf-staging
+        path: runtimes/pks/1-4
+  - name: production
+    depends_on: staging
+    trigger: false
+    endpoint: https://api.run.pivotal.io
+    organization: pivotal-pubtools
+    space: pivotalcf-prod
+    routes:
+      - domain: docs.pivotal.io
+        path: runtimes/pks/1-4

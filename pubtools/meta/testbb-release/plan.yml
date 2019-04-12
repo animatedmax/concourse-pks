@@ -1,0 +1,20 @@
+---
+- aggregate:
+  - get: testbb-release
+    trigger: true
+    params:
+      include_source_tarball: true
+  - get: concourse-scripts
+    resource: concourse-scripts-docs-master
+    trigger: false
+  - get: testbb-release-bundle
+    trigger: false
+- task: bundle
+  file: concourse-scripts/pubtools/meta/testbb-release/task.yml
+- aggregate:
+  - put: testbb-release-bundle
+    params:
+      file: bundle_output/testbb-release-bundle.tar.gz
+  - put: testbb-release-complete
+    params:
+      file: bundle_output/testbb-release-complete.tar.gz

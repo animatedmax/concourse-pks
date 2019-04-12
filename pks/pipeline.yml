@@ -1,0 +1,399 @@
+# Generated file...
+---
+resources:
+- name: bookbinder-release-complete
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: bookbinder-release-complete.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: concourse-scripts-docs-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/concourse-scripts-docs.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: docs-book-pks-1.2
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-book-pks.git
+    branch: '1.2'
+    private_key: {{github-deploy-bot}}
+- name: docs-layout-repo-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-layout-repo.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: docs-pks-1.2
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-pks.git
+    branch: '1.2'
+    private_key: {{github-deploy-bot}}
+- name: concourse-scripts-bundle
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: concourse-scripts-bundle.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: notify
+  type: slack-notification
+  source:
+    url: "((slack-webhook))"
+- name: docs-book-pks-1.3
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-book-pks.git
+    branch: '1.3'
+    private_key: {{github-deploy-bot}}
+- name: docs-pks-1.3
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-pks.git
+    branch: '1.3'
+    private_key: {{github-deploy-bot}}
+- name: docs-book-pks-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-book-pks.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: docs-layout-repo-edge
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-layout-repo.git
+    branch: edge
+    private_key: {{github-deploy-bot}}
+- name: docs-pks-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-pks.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: pks-pks-1-2-s3
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: pcf-pks-final_app.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: pks-pks-1-3-s3
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: pcf-pks-final_app.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: pks-pks-1-4-s3
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: pcf-pks-final_app.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+jobs:
+- name: pks-1-2-bind
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      trigger: false
+      params:
+        submodules: none
+    - get: book
+      resource: docs-book-pks-1.2
+      trigger: true
+      params:
+        submodules: none
+    - get: docs-layout-repo
+      resource: docs-layout-repo-master
+      trigger: true
+      params:
+        submodules: none
+    - get: docs-pks-1.2
+      resource: docs-pks-1.2
+      trigger: true
+      params:
+        submodules: none
+    - get: bookbinder-release
+      resource: bookbinder-release-complete
+      trigger: true
+  - task: pks-1-2-bind
+    file: concourse-scripts/pks/pks-1-2/pks-1-2-bind/task.yml
+    on_failure:
+      put: notify
+      params:
+        text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+          failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  - aggregate:
+    - put: pks-pks-1-2-s3
+      params:
+        file: bind_output/final_app.tar.gz
+- name: pks-1-2-production
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      passed:
+      - pks-1-2-staging
+    - get: concourse-scripts-bundle
+    - get: site-source
+      resource: pks-pks-1-2-s3
+      passed:
+      - pks-1-2-staging
+      trigger: false
+  - task: deploy
+    file: concourse-scripts/deploy_task.yml
+    params:
+      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-2/config.yml
+      DEPLOY_ENV: production
+      BOOK_ID: pivotal-cf/docs-book-pks
+      USERNAME: {{cloud-foundry-username}}
+      PASSWORD: {{cloud-foundry-password}}
+    on_failure:
+      put: notify
+      params:
+        text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+          failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+- name: pks-1-2-staging
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      passed:
+      - pks-1-2-bind
+    - get: concourse-scripts-bundle
+    - get: site-source
+      resource: pks-pks-1-2-s3
+      passed:
+      - pks-1-2-bind
+      trigger: true
+  - task: deploy
+    file: concourse-scripts/deploy_task.yml
+    params:
+      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-2/config.yml
+      DEPLOY_ENV: staging
+      BOOK_ID: pivotal-cf/docs-book-pks
+      USERNAME: {{cloud-foundry-username}}
+      PASSWORD: {{cloud-foundry-password}}
+    on_failure:
+      put: notify
+      params:
+        text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+          failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+- name: pks-1-3-bind
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      trigger: false
+      params:
+        submodules: none
+    - get: book
+      resource: docs-book-pks-1.3
+      trigger: true
+      params:
+        submodules: none
+    - get: docs-layout-repo
+      resource: docs-layout-repo-master
+      trigger: true
+      params:
+        submodules: none
+    - get: docs-pks-1.3
+      resource: docs-pks-1.3
+      trigger: true
+      params:
+        submodules: none
+    - get: bookbinder-release
+      resource: bookbinder-release-complete
+      trigger: true
+  - task: pks-1-3-bind
+    file: concourse-scripts/pks/pks-1-3/pks-1-3-bind/task.yml
+    on_failure:
+      put: notify
+      params:
+        text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+          failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  - aggregate:
+    - put: pks-pks-1-3-s3
+      params:
+        file: bind_output/final_app.tar.gz
+- name: pks-1-3-production
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      passed:
+      - pks-1-3-staging
+    - get: concourse-scripts-bundle
+    - get: site-source
+      resource: pks-pks-1-3-s3
+      passed:
+      - pks-1-3-staging
+      trigger: false
+  - task: deploy
+    file: concourse-scripts/deploy_task.yml
+    params:
+      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-3/config.yml
+      DEPLOY_ENV: production
+      BOOK_ID: pivotal-cf/docs-book-pks
+      USERNAME: {{cloud-foundry-username}}
+      PASSWORD: {{cloud-foundry-password}}
+    on_failure:
+      put: notify
+      params:
+        text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+          failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+- name: pks-1-3-staging
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      passed:
+      - pks-1-3-bind
+    - get: concourse-scripts-bundle
+    - get: site-source
+      resource: pks-pks-1-3-s3
+      passed:
+      - pks-1-3-bind
+      trigger: true
+  - task: deploy
+    file: concourse-scripts/deploy_task.yml
+    params:
+      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-3/config.yml
+      DEPLOY_ENV: staging
+      BOOK_ID: pivotal-cf/docs-book-pks
+      USERNAME: {{cloud-foundry-username}}
+      PASSWORD: {{cloud-foundry-password}}
+    on_failure:
+      put: notify
+      params:
+        text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+          failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+- name: pks-1-4-bind
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      trigger: false
+      params:
+        submodules: none
+    - get: book
+      resource: docs-book-pks-master
+      trigger: true
+      params:
+        submodules: none
+    - get: docs-layout-repo
+      resource: docs-layout-repo-edge
+      trigger: true
+      params:
+        submodules: none
+    - get: docs-pks-master
+      resource: docs-pks-master
+      trigger: true
+      params:
+        submodules: none
+    - get: bookbinder-release
+      resource: bookbinder-release-complete
+      trigger: true
+  - task: pks-1-4-bind
+    file: concourse-scripts/pks/pks-1-4/pks-1-4-bind/task.yml
+    on_failure:
+      put: notify
+      params:
+        text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+          failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  - aggregate:
+    - put: pks-pks-1-4-s3
+      params:
+        file: bind_output/final_app.tar.gz
+- name: pks-1-4-production
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      passed:
+      - pks-1-4-staging
+    - get: concourse-scripts-bundle
+    - get: site-source
+      resource: pks-pks-1-4-s3
+      passed:
+      - pks-1-4-staging
+      trigger: false
+  - task: deploy
+    file: concourse-scripts/deploy_task.yml
+    params:
+      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-4/config.yml
+      DEPLOY_ENV: production
+      BOOK_ID: pivotal-cf/docs-book-pks
+      USERNAME: {{cloud-foundry-username}}
+      PASSWORD: {{cloud-foundry-password}}
+    on_failure:
+      put: notify
+      params:
+        text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+          failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+- name: pks-1-4-staging
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      passed:
+      - pks-1-4-bind
+    - get: concourse-scripts-bundle
+    - get: site-source
+      resource: pks-pks-1-4-s3
+      passed:
+      - pks-1-4-bind
+      trigger: true
+  - task: deploy
+    file: concourse-scripts/deploy_task.yml
+    params:
+      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-4/config.yml
+      DEPLOY_ENV: staging
+      BOOK_ID: pivotal-cf/docs-book-pks
+      USERNAME: {{cloud-foundry-username}}
+      PASSWORD: {{cloud-foundry-password}}
+    on_failure:
+      put: notify
+      params:
+        text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+          failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+groups:
+- name: pks-1-2
+  jobs:
+  - pks-1-2-bind
+  - pks-1-2-production
+  - pks-1-2-staging
+- name: pks-1-3
+  jobs:
+  - pks-1-3-bind
+  - pks-1-3-production
+  - pks-1-3-staging
+- name: pks-1-4
+  jobs:
+  - pks-1-4-bind
+  - pks-1-4-production
+  - pks-1-4-staging
+resource_types:
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource

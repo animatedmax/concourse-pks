@@ -1,0 +1,14 @@
+# Generated file...
+---
+- name: concourse-scripts-bundle
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: concourse-scripts-bundle.tar.gz
+    private: true
+    access_key_id: "{{aws-access-key}}"
+    secret_access_key: "{{aws-secret-key}}"
+- name: notify
+  type: slack-notification
+  source:
+    url: "((slack-webhook))"

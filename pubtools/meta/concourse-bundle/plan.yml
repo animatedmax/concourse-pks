@@ -1,0 +1,11 @@
+---
+- aggregate:
+  - get: concourse-scripts
+    resource: concourse-scripts-docs-master
+    trigger: true
+  - get: concourse-scripts-bundle
+- task: bundle
+  file: concourse-scripts/pubtools/meta/concourse-bundle/task.yml
+- put: concourse-scripts-bundle
+  params:
+    file: bundle_output/bundle.tar.gz

@@ -1,0 +1,385 @@
+# Generated file...
+---
+resources:
+- name: concourse-scripts-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/concourse-scripts-docs.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: cli-docs-scripts
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/cli-docs-scripts.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: cf-cli-edge
+  type: s3
+  source:
+    access_key_id: {{access-cli-key-id}}
+    secret_access_key: {{secret-cli-access-key}}
+    bucket: cf-cli-releases
+    versioned_file: master/cf-cli_edge_linux_x86-64.tgz
+    region_name: us-west-1
+- name: concourse-scripts-docs-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/concourse-scripts-docs.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: bookbinder-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/bookbinder.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: bookbinder-master-bundle
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: bookbinder-master-bundle.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: bookbinder-master-complete
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: bookbinder-master-complete.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: bookbinder-edge-release-complete
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: bookbinder-edge-release-complete.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: bookbinder-release
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: bookbinder
+    access_token: {{github-deploy-bot-token}}
+- name: bookbinder-release-bundle
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: bookbinder-release-bundle.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: bookbinder-release-complete
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: bookbinder-release-complete.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: concourse-scripts-bundle
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: concourse-scripts-bundle.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: testbb-release
+  type: github-release
+  source:
+    user: animatedmax
+    repository: bookbinder
+    access_token: {{github-deploy-bot-token}}
+- name: testbb-release-bundle
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: testbb-release-bundle.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: testbb-release-complete
+  type: s3
+  source:
+    bucket: concourse-interim-steps
+    versioned_file: testbb-release-complete.tar.gz
+    private: true
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+- name: docs-owners-app-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/docs-owners-app.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: oss-owners-app-master
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/oss-owners-app.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: cf-pubtools-staging
+  type: cf
+  source:
+    api: https://api.run.pivotal.io
+    username: {{cloud-foundry-username}}
+    password: {{cloud-foundry-password}}
+    organization: pivotal-pubtools
+    space: pubtools-staging
+    skip_cert_check: false
+- name: cf-docs-prod
+  type: cf
+  source:
+    api: https://api.run.pivotal.io
+    username: {{cloud-foundry-username}}
+    password: {{cloud-foundry-password}}
+    organization: cfcommunity
+    space: docs-prod
+    skip_cert_check: false
+- name: cf-cli-release
+  type: github-release
+  source:
+    access_token: {{cf-cli-token}}
+    user: cloudfoundry
+    repository: cli
+- name: docs-cf-cli-push
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/docs-cf-cli.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+- name: cf-oss-pubtools-staging
+  type: cf
+  source:
+    api: https://api.run.pivotal.io
+    username: {{cloud-foundry-username}}
+    password: {{cloud-foundry-password}}
+    organization: cfcommunity
+    space: docs-prod
+    skip_cert_check: false
+jobs:
+- name: cf-cli-docs-edge
+  serial: true
+  plan:
+  - aggregate:
+    - get: cli-docs-scripts
+      trigger: true
+    - get: concourse-scripts
+      resource: concourse-scripts-master
+    - get: cf-cli-source
+      resource: cf-cli-edge
+      trigger: true
+  - task: publish-cf-cli-docs
+    file: concourse-scripts/pubtools/cf-CLI/publish-cf-cli-docs.yml
+    params:
+      DOCS_TARBALL_DIR_NAME: cf-cli-source
+  - put: cf-pubtools-staging
+    params:
+      manifest: cli-docs-public/edge.yml
+      path: cli-docs-public/public
+- name: cf-cli-docs-prod
+  serial: true
+  plan:
+  - aggregate:
+    - get: cli-docs-scripts
+      passed:
+      - cf-cli-docs-staging
+    - get: concourse-scripts
+      resource: concourse-scripts-master
+      passed:
+      - cf-cli-docs-staging
+    - get: cf-cli-source
+      resource: cf-cli-release
+      passed:
+      - cf-cli-docs-staging
+  - task: publish-cf-cli-docs
+    file: concourse-scripts/pubtools/cf-CLI/publish-cf-cli-docs.yml
+  - put: cf-docs-prod
+    params:
+      manifest: cli-docs-public/production.yml
+      path: cli-docs-public/public
+- name: cf-cli-docs-staging
+  serial: true
+  plan:
+  - aggregate:
+    - get: cli-docs-scripts
+      trigger: true
+    - get: concourse-scripts
+      resource: concourse-scripts-master
+    - get: cf-cli-source
+      resource: cf-cli-release
+      trigger: true
+  - task: publish-cf-cli-docs
+    file: concourse-scripts/pubtools/cf-CLI/publish-cf-cli-docs.yml
+  - put: cf-pubtools-staging
+    params:
+      manifest: cli-docs-public/staging.yml
+      path: cli-docs-public/public
+- name: generate-cli-section-page
+  serial: true
+  plan:
+  - aggregate:
+    - get: cli-docs-scripts
+      trigger: true
+    - get: concourse-scripts
+      resource: concourse-scripts-master
+    - get: cf-cli-release
+      trigger: true
+    - get: docs-cf-cli-in
+      resource: docs-cf-cli-push
+  - task: generate-cli-section-page
+    file: concourse-scripts/pubtools/cf-CLI/generate-cli-section-page.yml
+    params:
+      DOCS_PIVOTAL_TRACKER_TOKEN: {{docs-pivotal-tracker-token}}
+  - put: docs-cf-cli-push
+    params:
+      repository: docs-cf-cli-out
+- name: bookbinder
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      trigger: false
+    - get: bookbinder
+      resource: bookbinder-master
+      trigger: true
+    - get: bookbinder-bundle
+      resource: bookbinder-master-bundle
+      trigger: false
+  - task: tests
+    file: concourse-scripts/pubtools/meta/bookbinder/task.yml
+  - aggregate:
+    - put: bookbinder-master-bundle
+      params:
+        file: bundle_output/bookbinder-bundle.tar.gz
+    - put: bookbinder-master-complete
+      params:
+        file: bundle_output/bookbinder-master-complete.tar.gz
+- name: bookbinder-edge-release
+  serial: true
+  plan:
+  - aggregate:
+    - get: bookbinder
+      resource: bookbinder-master
+      trigger: true
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      trigger: false
+  - task: bundle
+    file: concourse-scripts/pubtools/meta/bookbinder-edge-release/task.yml
+  - aggregate:
+    - put: bookbinder-edge-release-complete
+      params:
+        file: bundle_output/bookbinder-edge-release-complete.tar.gz
+- name: bookbinder-release
+  serial: true
+  plan:
+  - aggregate:
+    - get: bookbinder-release
+      trigger: true
+      params:
+        include_source_tarball: true
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      trigger: false
+    - get: bookbinder-release-bundle
+      trigger: false
+  - task: bundle
+    file: concourse-scripts/pubtools/meta/bookbinder-release/task.yml
+  - aggregate:
+    - put: bookbinder-release-bundle
+      params:
+        file: bundle_output/bookbinder-release-bundle.tar.gz
+    - put: bookbinder-release-complete
+      params:
+        file: bundle_output/bookbinder-release-complete.tar.gz
+- name: concourse-bundle
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      trigger: true
+    - get: concourse-scripts-bundle
+  - task: bundle
+    file: concourse-scripts/pubtools/meta/concourse-bundle/task.yml
+  - put: concourse-scripts-bundle
+    params:
+      file: bundle_output/bundle.tar.gz
+- name: testbb-release
+  serial: true
+  plan:
+  - aggregate:
+    - get: testbb-release
+      trigger: true
+      params:
+        include_source_tarball: true
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+      trigger: false
+    - get: testbb-release-bundle
+      trigger: false
+  - task: bundle
+    file: concourse-scripts/pubtools/meta/testbb-release/task.yml
+  - aggregate:
+    - put: testbb-release-bundle
+      params:
+        file: bundle_output/testbb-release-bundle.tar.gz
+    - put: testbb-release-complete
+      params:
+        file: bundle_output/testbb-release-complete.tar.gz
+- name: docs-owners-app-staging
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+    - get: docs-owners-app
+      resource: docs-owners-app-master
+      trigger: true
+  - task: docs-owners-app
+    file: concourse-scripts/pubtools/owners/docs-owners-app-staging/task.yml
+  - put: cf-pubtools-staging
+    params:
+      manifest: docs-owners/staging.yml
+- name: oss-owners-app-staging
+  serial: true
+  plan:
+  - aggregate:
+    - get: concourse-scripts
+      resource: concourse-scripts-docs-master
+    - get: oss-owners-app
+      resource: oss-owners-app-master
+      trigger: true
+  - task: oss-owners-app
+    file: concourse-scripts/pubtools/owners/oss-owners-app-staging/task.yml
+  - put: cf-oss-pubtools-staging
+    params:
+      manifest: oss-owners/staging.yml
+groups:
+- name: cf-CLI
+  jobs:
+  - cf-cli-docs-edge
+  - cf-cli-docs-prod
+  - cf-cli-docs-staging
+  - generate-cli-section-page
+- name: meta
+  jobs:
+  - bookbinder
+  - bookbinder-edge-release
+  - bookbinder-release
+  - concourse-bundle
+  - testbb-release
+- name: owners
+  jobs:
+  - docs-owners-app-staging
+  - oss-owners-app-staging
+resource_types:
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource

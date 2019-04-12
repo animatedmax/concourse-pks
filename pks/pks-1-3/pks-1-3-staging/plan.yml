@@ -1,0 +1,26 @@
+# Generated file...
+---
+- aggregate:
+  - get: concourse-scripts
+    resource: concourse-scripts-docs-master
+    passed:
+    - pks-1-3-bind
+  - get: concourse-scripts-bundle
+  - get: site-source
+    resource: pks-pks-1-3-s3
+    passed:
+    - pks-1-3-bind
+    trigger: true
+- task: deploy
+  file: concourse-scripts/deploy_task.yml
+  params:
+    DEPLOY_DETAILS: concourse-scripts/pks/pks-1-3/config.yml
+    DEPLOY_ENV: staging
+    BOOK_ID: pivotal-cf/docs-book-pks
+    USERNAME: "{{cloud-foundry-username}}"
+    PASSWORD: "{{cloud-foundry-password}}"
+  on_failure:
+    put: notify
+    params:
+      text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
+        failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'

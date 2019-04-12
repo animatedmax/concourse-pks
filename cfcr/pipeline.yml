@@ -1,0 +1,26 @@
+---
+resources:
+- name: docs-cfcr
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/docs-cfcr
+- name: concourse-scripts
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/concourse-scripts-docs.git
+    branch: master
+    private_key: {{github-deploy-bot}}
+
+jobs:
+- name: build
+  serial: true
+  plan:
+  - aggregate: 
+    - get: concourse-scripts
+    - get: docs-cfcr
+      trigger: true
+  - task: build
+    file: concourse-scripts/cfcr/build_task.yml
+    params:
+      USERNAME: {{cloud-foundry-username}}
+      PASSWORD: {{cloud-foundry-password}}

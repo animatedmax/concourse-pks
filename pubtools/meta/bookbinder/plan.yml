@@ -1,0 +1,20 @@
+---
+- aggregate:
+  - get: concourse-scripts
+    resource: concourse-scripts-docs-master
+    trigger: false
+  - get: bookbinder
+    resource: bookbinder-master
+    trigger: true
+  - get: bookbinder-bundle
+    resource: bookbinder-master-bundle
+    trigger: false
+- task: tests
+  file: concourse-scripts/pubtools/meta/bookbinder/task.yml
+- aggregate:
+  - put: bookbinder-master-bundle
+    params:
+      file: bundle_output/bookbinder-bundle.tar.gz
+  - put: bookbinder-master-complete
+    params:
+      file: bundle_output/bookbinder-master-complete.tar.gz
