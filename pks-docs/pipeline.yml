@@ -75,7 +75,7 @@ resources:
     uri: git@github.com:pivotal-cf/docs-pks.git
     branch: master
     private_key: {{github-deploy-bot}}
-- name: pks-pks-1-2-s3
+- name: pks-docs-1-2-s3
   type: s3
   source:
     bucket: concourse-interim-steps
@@ -83,7 +83,7 @@ resources:
     private: true
     access_key_id: {{aws-access-key}}
     secret_access_key: {{aws-secret-key}}
-- name: pks-pks-1-3-s3
+- name: pks-docs-1-3-s3
   type: s3
   source:
     bucket: concourse-interim-steps
@@ -91,7 +91,7 @@ resources:
     private: true
     access_key_id: {{aws-access-key}}
     secret_access_key: {{aws-secret-key}}
-- name: pks-pks-1-4-s3
+- name: pks-docs-1-4-s3
   type: s3
   source:
     bucket: concourse-interim-steps
@@ -100,7 +100,7 @@ resources:
     access_key_id: {{aws-access-key}}
     secret_access_key: {{aws-secret-key}}
 jobs:
-- name: pks-1-2-bind
+- name: 1-2-bind
   serial: true
   plan:
   - aggregate:
@@ -127,35 +127,35 @@ jobs:
     - get: bookbinder-release
       resource: bookbinder-release-complete
       trigger: true
-  - task: pks-1-2-bind
-    file: concourse-scripts/pks/pks-1-2/pks-1-2-bind/task.yml
+  - task: 1-2-bind
+    file: concourse-scripts/pks-docs/1-2/1-2-bind/task.yml
     on_failure:
       put: notify
       params:
         text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
           failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
   - aggregate:
-    - put: pks-pks-1-2-s3
+    - put: pks-docs-1-2-s3
       params:
         file: bind_output/final_app.tar.gz
-- name: pks-1-2-production
+- name: 1-2-production
   serial: true
   plan:
   - aggregate:
     - get: concourse-scripts
       resource: concourse-scripts-docs-master
       passed:
-      - pks-1-2-staging
+      - 1-2-staging
     - get: concourse-scripts-bundle
     - get: site-source
-      resource: pks-pks-1-2-s3
+      resource: pks-docs-1-2-s3
       passed:
-      - pks-1-2-staging
+      - 1-2-staging
       trigger: false
   - task: deploy
     file: concourse-scripts/deploy_task.yml
     params:
-      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-2/config.yml
+      DEPLOY_DETAILS: concourse-scripts/pks-docs/1-2/config.yml
       DEPLOY_ENV: production
       BOOK_ID: pivotal-cf/docs-book-pks
       USERNAME: {{cloud-foundry-username}}
@@ -165,24 +165,24 @@ jobs:
       params:
         text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
           failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
-- name: pks-1-2-staging
+- name: 1-2-staging
   serial: true
   plan:
   - aggregate:
     - get: concourse-scripts
       resource: concourse-scripts-docs-master
       passed:
-      - pks-1-2-bind
+      - 1-2-bind
     - get: concourse-scripts-bundle
     - get: site-source
-      resource: pks-pks-1-2-s3
+      resource: pks-docs-1-2-s3
       passed:
-      - pks-1-2-bind
+      - 1-2-bind
       trigger: true
   - task: deploy
     file: concourse-scripts/deploy_task.yml
     params:
-      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-2/config.yml
+      DEPLOY_DETAILS: concourse-scripts/pks-docs/1-2/config.yml
       DEPLOY_ENV: staging
       BOOK_ID: pivotal-cf/docs-book-pks
       USERNAME: {{cloud-foundry-username}}
@@ -192,7 +192,7 @@ jobs:
       params:
         text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
           failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
-- name: pks-1-3-bind
+- name: 1-3-bind
   serial: true
   plan:
   - aggregate:
@@ -219,35 +219,35 @@ jobs:
     - get: bookbinder-release
       resource: bookbinder-release-complete
       trigger: true
-  - task: pks-1-3-bind
-    file: concourse-scripts/pks/pks-1-3/pks-1-3-bind/task.yml
+  - task: 1-3-bind
+    file: concourse-scripts/pks-docs/1-3/1-3-bind/task.yml
     on_failure:
       put: notify
       params:
         text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
           failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
   - aggregate:
-    - put: pks-pks-1-3-s3
+    - put: pks-docs-1-3-s3
       params:
         file: bind_output/final_app.tar.gz
-- name: pks-1-3-production
+- name: 1-3-production
   serial: true
   plan:
   - aggregate:
     - get: concourse-scripts
       resource: concourse-scripts-docs-master
       passed:
-      - pks-1-3-staging
+      - 1-3-staging
     - get: concourse-scripts-bundle
     - get: site-source
-      resource: pks-pks-1-3-s3
+      resource: pks-docs-1-3-s3
       passed:
-      - pks-1-3-staging
+      - 1-3-staging
       trigger: false
   - task: deploy
     file: concourse-scripts/deploy_task.yml
     params:
-      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-3/config.yml
+      DEPLOY_DETAILS: concourse-scripts/pks-docs/1-3/config.yml
       DEPLOY_ENV: production
       BOOK_ID: pivotal-cf/docs-book-pks
       USERNAME: {{cloud-foundry-username}}
@@ -257,24 +257,24 @@ jobs:
       params:
         text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
           failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
-- name: pks-1-3-staging
+- name: 1-3-staging
   serial: true
   plan:
   - aggregate:
     - get: concourse-scripts
       resource: concourse-scripts-docs-master
       passed:
-      - pks-1-3-bind
+      - 1-3-bind
     - get: concourse-scripts-bundle
     - get: site-source
-      resource: pks-pks-1-3-s3
+      resource: pks-docs-1-3-s3
       passed:
-      - pks-1-3-bind
+      - 1-3-bind
       trigger: true
   - task: deploy
     file: concourse-scripts/deploy_task.yml
     params:
-      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-3/config.yml
+      DEPLOY_DETAILS: concourse-scripts/pks-docs/1-3/config.yml
       DEPLOY_ENV: staging
       BOOK_ID: pivotal-cf/docs-book-pks
       USERNAME: {{cloud-foundry-username}}
@@ -284,7 +284,7 @@ jobs:
       params:
         text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
           failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
-- name: pks-1-4-bind
+- name: 1-4-bind
   serial: true
   plan:
   - aggregate:
@@ -311,35 +311,35 @@ jobs:
     - get: bookbinder-release
       resource: bookbinder-release-complete
       trigger: true
-  - task: pks-1-4-bind
-    file: concourse-scripts/pks/pks-1-4/pks-1-4-bind/task.yml
+  - task: 1-4-bind
+    file: concourse-scripts/pks-docs/1-4/1-4-bind/task.yml
     on_failure:
       put: notify
       params:
         text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
           failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
   - aggregate:
-    - put: pks-pks-1-4-s3
+    - put: pks-docs-1-4-s3
       params:
         file: bind_output/final_app.tar.gz
-- name: pks-1-4-production
+- name: 1-4-production
   serial: true
   plan:
   - aggregate:
     - get: concourse-scripts
       resource: concourse-scripts-docs-master
       passed:
-      - pks-1-4-staging
+      - 1-4-staging
     - get: concourse-scripts-bundle
     - get: site-source
-      resource: pks-pks-1-4-s3
+      resource: pks-docs-1-4-s3
       passed:
-      - pks-1-4-staging
+      - 1-4-staging
       trigger: false
   - task: deploy
     file: concourse-scripts/deploy_task.yml
     params:
-      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-4/config.yml
+      DEPLOY_DETAILS: concourse-scripts/pks-docs/1-4/config.yml
       DEPLOY_ENV: production
       BOOK_ID: pivotal-cf/docs-book-pks
       USERNAME: {{cloud-foundry-username}}
@@ -349,24 +349,24 @@ jobs:
       params:
         text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
           failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
-- name: pks-1-4-staging
+- name: 1-4-staging
   serial: true
   plan:
   - aggregate:
     - get: concourse-scripts
       resource: concourse-scripts-docs-master
       passed:
-      - pks-1-4-bind
+      - 1-4-bind
     - get: concourse-scripts-bundle
     - get: site-source
-      resource: pks-pks-1-4-s3
+      resource: pks-docs-1-4-s3
       passed:
-      - pks-1-4-bind
+      - 1-4-bind
       trigger: true
   - task: deploy
     file: concourse-scripts/deploy_task.yml
     params:
-      DEPLOY_DETAILS: concourse-scripts/pks/pks-1-4/config.yml
+      DEPLOY_DETAILS: concourse-scripts/pks-docs/1-4/config.yml
       DEPLOY_ENV: staging
       BOOK_ID: pivotal-cf/docs-book-pks
       USERNAME: {{cloud-foundry-username}}
@@ -377,21 +377,21 @@ jobs:
         text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
           failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
 groups:
-- name: pks-1-2
+- name: 1-2
   jobs:
-  - pks-1-2-bind
-  - pks-1-2-production
-  - pks-1-2-staging
-- name: pks-1-3
+  - 1-2-bind
+  - 1-2-production
+  - 1-2-staging
+- name: 1-3
   jobs:
-  - pks-1-3-bind
-  - pks-1-3-production
-  - pks-1-3-staging
-- name: pks-1-4
+  - 1-3-bind
+  - 1-3-production
+  - 1-3-staging
+- name: 1-4
   jobs:
-  - pks-1-4-bind
-  - pks-1-4-production
-  - pks-1-4-staging
+  - 1-4-bind
+  - 1-4-production
+  - 1-4-staging
 resource_types:
   - name: slack-notification
     type: docker-image

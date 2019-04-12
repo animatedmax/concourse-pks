@@ -7,7 +7,7 @@
     params:
       submodules: none
   - get: book
-    resource: docs-book-pks-1.2
+    resource: docs-book-pks-1.3
     trigger: true
     params:
       submodules: none
@@ -16,22 +16,22 @@
     trigger: true
     params:
       submodules: none
-  - get: docs-pks-1.2
-    resource: docs-pks-1.2
+  - get: docs-pks-1.3
+    resource: docs-pks-1.3
     trigger: true
     params:
       submodules: none
   - get: bookbinder-release
     resource: bookbinder-release-complete
     trigger: true
-- task: pks-1-2-bind
-  file: concourse-scripts/pks/pks-1-2/pks-1-2-bind/task.yml
+- task: 1-3-bind
+  file: concourse-scripts/pks-docs/1-3/1-3-bind/task.yml
   on_failure:
     put: notify
     params:
       text: 'The `$BUILD_PIPELINE_NAME` pipeline is broken. `$BUILD_JOB_NAME` job
         failed on build `$BUILD_NAME`: https://concourse.run.pivotal.io/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
 - aggregate:
-  - put: pks-pks-1-2-s3
+  - put: pks-docs-1-3-s3
     params:
       file: bind_output/final_app.tar.gz
